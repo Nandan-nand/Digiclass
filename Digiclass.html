@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigiClass</title>
+    <style>
+        /* General Body and Layout Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* Form and Input Styling */
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            width: calc(100% - 24px);
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"],
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Dashboard and List Styling */
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 24px;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .task-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative; /* For positioning the delete button */
+        }
+
+        .task-item.graded {
+            background-color: #e8f5e9;
+            border-color: #c8e6c9;
+        }
+
+        .task-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+
+        .task-subject {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+
+        .task-description {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .task-status {
+            font-weight: bold;
+            color: #d35400;
+        }
+
+        .task-status.graded {
+            color: #27ae60;
+        }
+
+        .student-answer, .student-submission {
+            background-color: #fff;
+            border-left: 3px solid #3498db;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .submission-container {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        
+        /* Utility classes for displaying sections */
+        .hidden {
+            display: none;
+        }
+
+        .btn-link {
+            background: none;
+            color: #3498db;
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Login & Registration Page -->
+        <div id="login-register-page">
+            <h1>Welcome to DigiClass</h1>
+            <form id="login-form">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+
+            <form id="register-form" class="hidden">
+                <h2>Student Registration</h2>
+                <input type="text" id="register-username" placeholder="New Student Username" required>
+                <input type="password" id="register-password" placeholder="New Password" required>
+                <button type="submit">Register</button>
+            </form>
+
+            <button class="btn-link" id="show-register">New Student? Register here.</button>
+            <button class="btn-link hidden" id="show-login">Back to Login</button>
+        </div>
+
+        <!-- Teacher Dashboard -->
+        <div id="teacher-dashboard" class="hidden">
+            <h1>Teacher Dashboard</h1>
+            <p>Welcome, <span id="teacher-name"></span>!</p>
+
+            <form id="create-task-form">
+                <h2>Create a New Task</h2>
+                <select id="task-subject" required>
+                    <option value="">Select Subject</option>
+                    <option value="math">Math</option>
+                    <option value="science">Science</option>
+                    <option value="english">English</option>
+                </select>
+                <input type="text" id="task-title" placeholder="Task Title" required>
+                <textarea id="task-description" placeholder="Task Description" required></textarea>
+                <button type="submit">Create Task</button>
+            </form>
+
+            <h2>Current Tasks & Submissions</h2>
+            <ul id="teacher-task-list" class="task-list"></ul>
+            <button id="logout-button-teacher" class="btn-secondary">Logout</button>
+        </div>
+
+        <!-- Student Dashboard -->
+        <div id="student-dashboard" class="hidden">
+            <h1>Student Dashboard</h1>
+            <p>Welcome, <span id="student-name"></span>!</p>
+            <h2>My Tasks</h2>
+            <ul id="student-task-list" class="task-list"></ul>
+            <button id="logout-button-student" class="btn-secondary">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA MANAGEMENT (In-memory arrays) ---
+        // We'll use arrays to store our data. This data will be lost on page refresh.
+        // The `role` property is crucial for distinguishing between teachers and students.
+        const users = [
+            { id: 1, username: 'teacher', password: 'password', role: 'teacher' },
+            { id: 2, username: 'student1', password: 'password', role: 'student' },
+            { id: 3, username: 'student2', password: 'password', role: 'student' }
+        ];
+
+        let tasks = [];
+        let currentUserId = null;
+
+        // --- DOM ELEMENTS ---
+        const loginRegisterPage = document.getElementById('login-register-page');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegisterBtn = document.getElementById('show-register');
+        const showLoginBtn = document.getElementById('show-login');
+
+        const teacherDashboard = document.getElementById('teacher-dashboard');
+        const studentDashboard = document.getElementById('student-dashboard');
+
+        const teacherNameSpan = document.getElementById('teacher-name');
+        const studentNameSpan = document.getElementById('student-name');
+
+        const createTaskForm = document.getElementById('create-task-form');
+        const teacherTaskList = document.getElementById('teacher-task-list');
+        const studentTaskList = document.getElementById('student-task-list');
+
+        const logoutButtonTeacher = document.getElementById('logout-button-teacher');
+        const logoutButtonStudent = document.getElementById('logout-button-student');
+        
+        // --- UI MANAGEMENT FUNCTIONS ---
+        function showPage(pageId) {
+            loginRegisterPage.classList.add('hidden');
+            teacherDashboard.classList.add('hidden');
+            studentDashboard.classList.add('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        function showLoginRegister() {
+            loginForm.classList.remove('hidden');
+            showRegisterBtn.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            showLoginBtn.classList.add('hidden');
+        }
+
+        function showRegister() {
+            loginForm.classList.add('hidden');
+            showRegisterBtn.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            showLoginBtn.classList.remove('hidden');
+        }
+
+        // --- EVENT LISTENERS ---
+        showRegisterBtn.addEventListener('click', showRegister);
+        showLoginBtn.addEventListener('click', showLoginRegister);
+
+        // --- AUTHENTICATION FUNCTIONS ---
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = e.target['login-username'].value;
+            const password = e.target['login-password'].value;
+
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                currentUserId = user.id;
+                if (user.role === 'teacher') {
+                    teacherNameSpan.textContent = user.username;
+                    showPage('teacher-dashboard');
+                    renderTeacherTasks();
+                } else {
+                    studentNameSpan.textContent = user.username;
+                    showPage('student-dashboard');
+                    renderStudentTasks();
+                }
+            } else {
+                alert('Invalid username or password.');
+            }
+        });
+
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = e.target['register-username'].value;
+            const password = e.target['register-password'].value;
+
+            if (users.some(u => u.username === username)) {
+                alert('Username already exists. Please choose a different one.');
+                return;
+            }
+
+            const newUserId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+            users.push({
+                id: newUserId,
+                username: username,
+                password: password,
+                role: 'student'
+            });
+
+            alert('Registration successful! You can now log in.');
+            showLoginRegister();
+            e.target.reset();
+        });
+
+        // --- TEACHER FUNCTIONS ---
+        createTaskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const subject = e.target['task-subject'].value;
+            const title = e.target['task-title'].value;
+            const description = e.target['task-description'].value;
+
+            const newTaskId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+            tasks.push({
+                id: newTaskId,
+                subject: subject,
+                title: title,
+                description: description,
+                submissions: []
+            });
+            e.target.reset();
+            renderTeacherTasks();
+        });
+
+        function renderTeacherTasks() {
+            teacherTaskList.innerHTML = '';
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                li.innerHTML = `
+                    <span class="task-subject">Subject: ${task.subject.toUpperCase()}</span>
+                    <span class="task-title">${task.title}</span>
+                    <p class="task-description">${task.description}</p>
+                    <h3>Submissions:</h3>
+                `;
+
+                // Render submissions for each task
+                if (task.submissions.length > 0) {
+                    task.submissions.forEach(submission => {
+                        const studentName = users.find(u => u.id === submission.studentId).username;
+                        const submissionContainer = document.createElement('div');
+                        submissionContainer.className = 'submission-container';
+                        submissionContainer.innerHTML = `
+                            <p><strong>Student:</strong> ${studentName}</p>
+                            <div class="student-answer">
+                                <strong>Answer:</strong>
+                                <p>${submission.answer}</p>
+                            </div>
+                        `;
+
+                        // Add grading form if not yet graded
+                        if (!submission.mark) {
+                            const gradeForm = document.createElement('form');
+                            gradeForm.innerHTML = `
+                                <input type="number" min="0" max="100" placeholder="Enter Mark (0-100)" required>
+                                <button type="submit">Grade</button>
+                            `;
+                            gradeForm.addEventListener('submit', (e) => {
+                                e.preventDefault();
+                                const mark = e.target.querySelector('input').value;
+                                gradeSubmission(task.id, submission.studentId, mark);
+                            });
+                            submissionContainer.appendChild(gradeForm);
+                        } else {
+                            submissionContainer.innerHTML += `<p><strong>Mark:</strong> <span class="task-status graded">${submission.mark}/100</span></p>`;
+                        }
+
+                        li.appendChild(submissionContainer);
+                    });
+                } else {
+                    li.innerHTML += '<p>No submissions yet.</p>';
+                }
+                
+                teacherTaskList.appendChild(li);
+            });
+        }
+
+        function gradeSubmission(taskId, studentId, mark) {
+            const task = tasks.find(t => t.id === taskId);
+            const submission = task.submissions.find(s => s.studentId === studentId);
+            if (submission) {
+                submission.mark = mark;
+                renderTeacherTasks();
+                renderStudentTasks();
+            }
+        }
+        
+        // --- STUDENT FUNCTIONS ---
+        function renderStudentTasks() {
+            studentTaskList.innerHTML = '';
+            const currentStudentUsername = studentNameSpan.textContent;
+            const currentStudentId = users.find(u => u.username === currentStudentUsername)?.id;
+
+            if (!currentStudentId) return;
+
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                const submission = task.submissions.find(s => s.studentId === currentStudentId);
+                
+                let statusClass = '';
+                if (submission && submission.mark) {
+                    statusClass = 'graded';
+                }
+
+                li.className = `task-item ${statusClass}`;
+                li.innerHTML = `
+                    <span class="task-subject">Subject: ${task.subject.toUpperCase()}</span>
+                    <span class="task-title">${task.title}</span>
+                    <p class="task-description">${task.description}</p>
+                `;
+
+                // If the student has submitted
+                if (submission) {
+                    const submissionDiv = document.createElement('div');
+                    submissionDiv.className = 'student-submission';
+                    submissionDiv.innerHTML = `
+                        <strong>Your Answer:</strong>
+                        <p>${submission.answer}</p>
+                        <p><strong>Status:</strong> ${submission.mark ? 'Graded' : 'Submitted'}</p>
+                    `;
+                    if (submission.mark) {
+                        submissionDiv.innerHTML += `<p><strong>Your Mark:</strong> <span class="task-status graded">${submission.mark}/100</span></p>`;
+                    }
+                    li.appendChild(submissionDiv);
+                } else { // If the student has not yet submitted
+                    const submitForm = document.createElement('form');
+                    submitForm.innerHTML = `
+                        <textarea placeholder="Write your answer here..." required></textarea>
+                        <button type="submit">Submit Answer</button>
+                    `;
+                    submitForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const answer = e.target.querySelector('textarea').value;
+                        submitAnswer(task.id, currentStudentId, answer);
+                    });
+                    li.appendChild(submitForm);
+                }
+
+                studentTaskList.appendChild(li);
+            });
+        }
+
+        function submitAnswer(taskId, studentId, answer) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.submissions.push({
+                    studentId: studentId,
+                    answer: answer,
+                    mark: null
+                });
+                renderStudentTasks();
+                renderTeacherTasks();
+            }
+        }
+
+        // --- LOGOUT FUNCTIONALITY ---
+        function logout() {
+            currentUserId = null;
+            showPage('login-register-page');
+            showLoginRegister();
+            loginForm.reset();
+        }
+        logoutButtonTeacher.addEventListener('click', logout);
+        logoutButtonStudent.addEventListener('click', logout);
+
+        // Initialize the app on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('login-register-page');
+        });
+    </script>
+</body>
+</html>
